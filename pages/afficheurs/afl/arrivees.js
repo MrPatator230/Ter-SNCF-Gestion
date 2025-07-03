@@ -1,7 +1,7 @@
 import { useState, useEffect, useContext } from 'react';
 import { useRouter } from 'next/router';
 import styles from './AflArrivee.module.css';
-import { filterSchedulesByType, sortSchedulesByTime, getTrainStatus, getStationTime } from '../../../utils/scheduleUtils';
+import { filterSchedulesByType, sortSchedulesByTime, getTrainStatus, getStationTime, } from '../../../utils/scheduleUtils';
 import { useTrackAssignments } from '../../../src/contexts/TrackAssignmentContext';
 import { SettingsContext } from '../../../contexts/SettingsContext';
 
@@ -111,11 +111,15 @@ export default function AFLArrivals() {
   }, [gare]);
 
   useEffect(() => {
+    if (schedules.length < 5) {
+      setCurrentPage(0);
+      return;
+    }
     const pageInterval = setInterval(() => {
       setCurrentPage(prev => (prev + 1) % 2);
     }, 10000);
     return () => clearInterval(pageInterval);
-  }, []);
+  }, [schedules]);
 
   useEffect(() => {
     const toggleInterval = setInterval(() => {
@@ -148,7 +152,19 @@ export default function AFLArrivals() {
     );
   }
 
-  const schedulesToDisplay = currentPage === 0 ? schedules.slice(0, 4) : schedules.slice(4, 14);
+const now = new Date();
+
+const filteredSchedules = schedules.filter(schedule => {
+  const timeStr = getStationTime(schedule, gare, 'arrival');
+  if (!timeStr) return false;
+  const [hours, minutes] = timeStr.split(':').map(Number);
+  const scheduleDate = new Date();
+  scheduleDate.setHours(hours, minutes, 0, 0);
+  const diffMs = now - scheduleDate;
+  return diffMs <= 60000; // 1 minute in milliseconds
+});
+
+const schedulesToDisplay = currentPage === 0 ? filteredSchedules.slice(0, 4) : filteredSchedules.slice(4, 14);
 
   return (
     <div lang="fr">
@@ -171,7 +187,7 @@ export default function AFLArrivals() {
             const globalIndex = currentPage === 0 ? index : index + 4;
             const status = getTrainStatus(schedule);
             const isEven = globalIndex % 2 === 0;
-            const displayTime = getStationTime(schedule, gare, 'arrival');
+            const displayTime = getStationTime(schedule, gare, 'arrival', false);
             let statusCode = 'on_time';
             if (schedule.isCancelled) {
               statusCode = 'canceled';
@@ -309,13 +325,26 @@ fill="#ffffff"/>
                 </section>
 
                 <section className={styles.middleSection}>
-                  <div className={styles.destinationRow}>
+                  <div className={styles.destinationRow} style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                     {isBus ? (
                       <i className="bi bi-bus-front-fill" aria-label="Bus" role="img"></i>
                     ) : (
                       <i className="bi bi-train-front-fill" aria-label="Train" role="img"></i>
                     )}
-                    <div>{schedule.departureStation}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                      <div>{schedule.departureStation}</div>
+                      {(statusCode === 'delayed' || statusCode === 'canceled') && (schedule.cause || schedule.cause === '') && (
+                        <div
+                          className={styles.causeBadge}
+                          style={{
+                            backgroundColor: statusCode === 'canceled' ? '#cf0a0a' : '#ff7f50',
+                          }}
+                          aria-label={`Cause: ${schedule.cause || ''}`}
+                        >
+                          {schedule.cause || ''}
+                        </div>
+                      )}
+                    </div>
                   </div>
                   {currentPage === 0 && (
                     <div className={styles.viaRow}>

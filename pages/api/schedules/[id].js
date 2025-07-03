@@ -21,7 +21,8 @@ export default async function handler(req, res) {
         servedStations: 'served_stations',
         delayMinutes: 'delay_minutes',
         isCancelled: 'is_cancelled',
-        trackAssignments: 'track_assignments'
+        trackAssignments: 'track_assignments',
+        cause: 'cause'
       };
 
       const jsonFields = ['composition', 'joursCirculation', 'servedStations', 'trackAssignments'];

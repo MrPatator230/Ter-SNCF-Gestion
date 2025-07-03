@@ -41,6 +41,16 @@ export default async function handler(req, res) {
       delayMinutes: row.delay_minutes,
       isCancelled: row.is_cancelled,
       trackAssignments: row.track_assignments,
+      cause: row.cause,
+      statusCode: row.status_code,
+      statusMessage: row.status_message,
+      statusUpdatedAt: row.status_updated_at,
+      isRealTime: row.is_real_time,
+      isDeleted: row.is_deleted,
+      isVisible: row.is_visible,
+      isDisplayed: row.is_displayed,
+      isArchived: row.is_archived,
+      isInService: row.is_in_service,
     }));
 
     res.status(200).json(camelCaseRows);

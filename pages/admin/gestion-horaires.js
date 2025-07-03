@@ -12,6 +12,8 @@ export default function GestionHoraires() {
   const [selectedSchedule, setSelectedSchedule] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [trackAssignments, setTrackAssignments] = useState({});
+  const [showCauseModal, setShowCauseModal] = useState(false);
+  const [causeText, setCauseText] = useState('');
 
   useEffect(() => {
     if (!isAuthenticated || role !== 'admin') {
@@ -71,9 +73,21 @@ export default function GestionHoraires() {
     setShowModal(true);
   };
 
+  const openCauseModal = (schedule) => {
+    setSelectedSchedule(schedule);
+    setCauseText(schedule.cause || '');
+    setShowCauseModal(true);
+  };
+
   const closeModal = () => {
     setSelectedSchedule(null);
     setShowModal(false);
+  };
+
+  const closeCauseModal = () => {
+    setSelectedSchedule(null);
+    setCauseText('');
+    setShowCauseModal(false);
   };
 
   const handleChange = async (scheduleId, field, value) => {
@@ -254,11 +268,18 @@ export default function GestionHoraires() {
                 </td>
                 <td>
                   <button 
-                    className="btn btn-sm btn-outline-primary"
+                    className="btn btn-sm btn-outline-primary me-2"
                     onClick={() => openModal(schedule)}
                   >
                     <i className="icons-edit me-2"></i>
                     Modifier les arrêts
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-outline-primary"
+                    onClick={() => openCauseModal(schedule)}
+                  >
+                    Cause du retard ou de la suppression
                   </button>
                 </td>
               </tr>
@@ -335,6 +356,69 @@ export default function GestionHoraires() {
                   onClick={closeModal}
                 >
                   Fermer
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        {showCauseModal && selectedSchedule && (
+          <div className={modalStyles.modalBackdrop}>
+            <div className={modalStyles.modal}>
+              <div className={modalStyles.modalHeader}>
+                <h5 className={modalStyles.modalTitle}>
+                  Cause du retard ou de la suppression - Train {selectedSchedule.trainNumber}
+                </h5>
+                <button 
+                  type="button" 
+                  className="btn-close" 
+                  onClick={closeCauseModal}
+                  aria-label="Close"
+                ></button>
+              </div>
+              <div className={modalStyles.modalBody}>
+                <textarea
+                  className="form-control"
+                  rows="5"
+                  value={causeText}
+                  onChange={e => setCauseText(e.target.value)}
+                  placeholder="Entrez la cause du retard ou de la suppression ici..."
+                />
+              </div>
+              <div className={modalStyles.modalFooter}>
+                <button 
+                  type="button" 
+                  className="btn btn-primary"
+                  onClick={async () => {
+                    if (!selectedSchedule) return;
+                    try {
+                      setSending(true);
+                      setMessage(null);
+                      const res = await fetch(`/api/schedules/${selectedSchedule.id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ cause: causeText }),
+                      });
+                      if (!res.ok) throw new Error('Erreur lors de la mise à jour de la cause.');
+                      // Update local state
+                      const updatedSchedules = schedules.map(s => s.id === selectedSchedule.id ? { ...s, cause: causeText } : s);
+                      setSchedules(updatedSchedules);
+                      setMessage({ type: 'success', text: 'Cause mise à jour avec succès.' });
+                      closeCauseModal();
+                    } catch (error) {
+                      setMessage({ type: 'error', text: error.message });
+                    } finally {
+                      setSending(false);
+                    }
+                  }}
+                >
+                  Enregistrer
+                </button>
+                <button 
+                  type="button" 
+                  className="btn btn-secondary ms-2"
+                  onClick={closeCauseModal}
+                >
+                  Annuler
                 </button>
               </div>
             </div>

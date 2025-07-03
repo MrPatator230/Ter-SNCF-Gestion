@@ -218,6 +218,19 @@
   white-space: nowrap;
 }
 
-/* Additional utility classes if needed */
+.causeBadge {
+  color: white;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 12px;
+  font-size: 1.4rem;
+  max-width: 300px;
+  overflow-wrap: break-word;
+  margin-left: 8px;
+  display: inline-block;
+  user-select: none;
+  white-space: normal;
+  text-align: center;
+}
 
 
