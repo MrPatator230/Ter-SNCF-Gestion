@@ -2,7 +2,7 @@ import { useState, useEffect, useContext } from 'react';
 import { useRouter } from 'next/router';
 import Image from 'next/image';
 import styles from './Afficheurs.module.css';
-import { getStationSchedules, filterSchedulesByType, sortSchedulesByTime, getTrainStatus, getStationTime } from '../../utils/scheduleUtils';
+import { getStationSchedules, filterSchedulesByType, sortSchedulesByTime, getTrainStatus, getStationTime, getNextDay, filterSchedulesByDay } from '../../utils/scheduleUtils';
 import { useTrackAssignments } from '../../src/contexts/TrackAssignmentContext';
 import Link from 'next/link';
 import { SettingsContext } from '../../contexts/SettingsContext';
@@ -31,6 +31,7 @@ export default function AfficheursPublic() {
   const trackAssignments = trackAssignmentsContext ? trackAssignmentsContext.trackAssignments : {};
 
   const [schedules, setSchedules] = useState([]);
+  const [nextDaySchedules, setNextDaySchedules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [trainTypeLogos, setTrainTypeLogos] = useState({});
   const [displayIndex, setDisplayIndex] = useState(0);
@@ -95,22 +96,29 @@ export default function AfficheursPublic() {
 
           // Filter schedules by current day of operation
           const currentDay = getCurrentDay();
-          const filteredByDay = filteredByType.filter(schedule => {
-            if (!schedule.joursCirculation || schedule.joursCirculation.length === 0) {
-              return true; // If no joursCirculation specified, assume train runs every day
-            }
-            return schedule.joursCirculation.includes(currentDay);
-          });
+          const filteredByDay = filterSchedulesByDay(filteredByType, currentDay);
 
           const sorted = sortSchedulesByTime(filteredByDay, gare, 'departures');
           setSchedules(sorted);
+
+          // Get next day schedules
+          const nextDay = getNextDay(currentDay);
+          if (nextDay) {
+            const filteredNextDay = filterSchedulesByDay(filteredByType, nextDay);
+            const sortedNextDay = sortSchedulesByTime(filteredNextDay, gare, 'departures');
+            setNextDaySchedules(sortedNextDay);
+          } else {
+            setNextDaySchedules([]);
+          }
         } catch (error) {
           console.error('Failed to fetch schedules:', error);
           setSchedules([]);
+          setNextDaySchedules([]);
         }
         setLoading(false);
       } else {
         setSchedules([]);
+        setNextDaySchedules([]);
         setLoading(false);
       }
     }
@@ -278,6 +286,97 @@ export default function AfficheursPublic() {
           );
         })}
       </ul>
+      {displayIndex === 1 && nextDaySchedules.length > 0 && (
+        <section className={styles.nextDaySection}>
+          <p className={styles.nextDayText}>Les prochains départs auront lieux demain.</p>
+          <ul className={styles.scheduleList} role="list">
+            {nextDaySchedules.map((schedule, index) => {
+              const status = getTrainStatus(schedule);
+              const trainType = schedule.trainType || 'MOBIGO';
+              const logoSrc = trainTypeLogos[trainType] || '/images/sncf-logo.png';
+              const isEven = index % 2 === 0;
+              const displayTime = getStationTime(schedule, gare, 'departure');
+
+              // Extract the status code string from the status object
+              const statusCode = status.status;
+
+              return (
+                <li className={`${styles.scheduleRow} ${isEven ? styles.scheduleRowEven : styles.scheduleRowOdd}`} role="listitem">
+                  <section className={styles.leftSection}>
+                    <div className={styles.sncfLogoContainer}>
+                      <Image src={logoSrc} alt={trainType} layout="fill" objectFit="contain" />
+                    </div>
+                    <div className={styles.alternatingTextContainer}>
+                      {displayIndex === 0 ? (
+                        <div className={styles.trainTypeNameContainer}>
+                          <div className={styles.trainTypeText}>{trainType}</div>
+                          <div className={styles.trainNumberText}>{schedule.trainNumber || ''}</div>
+                        </div>
+                      ) : (
+                        <>
+                          {statusCode === 'ontime' && <div className={styles.statusText}>à l&apos;heure</div>}
+                          {statusCode === 'delayed' && <div className={styles.statusText}>Retardé</div>}
+                          {statusCode === 'cancelled' && <div className={styles.statusText}>Supprimé</div>}
+                        </>
+                      )}
+                    </div>
+                    <time className={styles.departureTime} dateTime={displayTime} style={{ color: '#ffea00' }}>
+                      {formatTimeHHhmmQuoted(displayTime)}
+                    </time>
+                  </section>
+                  <section className={styles.middleSection}>
+                    <div className={styles.destination}>{schedule.arrivalStation}</div>
+                    {schedule.servedStations && schedule.servedStations.length > 0 && (
+                      <div className={styles.servedStations}>
+                        <div className={styles.marquee} aria-label="Liste des gares desservies" role="list">
+                          <div className={styles.marqueeContent}>
+                            {(() => {
+                              const selectedStation = gare;
+                              let stationsList = [];
+                              if (schedule.servedStations && schedule.servedStations.length > 0) {
+                                const normalizedStations = schedule.servedStations.map((station) =>
+                                  typeof station === 'object' ? station.name : station
+                                );
+                                const startIndex = normalizedStations.indexOf(selectedStation);
+                                if (startIndex !== -1) {
+                                  stationsList = normalizedStations.slice(startIndex + 1);
+                                } else {
+                                  stationsList = normalizedStations;
+                                }
+                              }
+                              return stationsList.map((station, idx) => (
+                                <span key={idx} className={styles.stationName} role="listitem">
+                                  {idx > 0 && <span className={styles.dotSeparator} aria-hidden="true">•</span>}
+                                  {station}
+                                </span>
+                              ));
+                            })()}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </section>
+                  {(() => {
+                    const now = new Date();
+                    const [hours, minutes] = displayTime.split(':').map(Number);
+                    const departureDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes);
+                    const diffMinutes = (departureDate - now) / 60000;
+                    const locationType = stationInfo?.locationType || 'Ville';
+                    const showPlatformTime = locationType === 'Ville' ? 20 : 720; // 20 minutes for Ville, 720 minutes (12h) for Interurbain
+                    return (
+                      <div
+                        className={`${styles.rightSection} ${!(diffMinutes <= showPlatformTime && diffMinutes >= 0) ? styles.hiddenSquare : ''}`}
+                        aria-hidden={!(diffMinutes <= showPlatformTime && diffMinutes >= 0)}
+                      >
+                        {diffMinutes <= showPlatformTime && diffMinutes >= 0 ? (trackAssignments[schedule.id]?.[gare] || schedule.track || '-') : ''}
+                      </div>
+                    );
+                  })()}
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
     </main>
   );
-}

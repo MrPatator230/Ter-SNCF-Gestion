@@ -11,6 +11,41 @@
   color: rgb(255, 255, 255);
 }
 
+.scrollContainer {
+  width: auto;
+  overflow-x: auto;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: #888 transparent;
+  
+
+}
+
+.scrollContainer::-webkit-scrollbar {
+  height: 6px;
+}
+
+.scrollContainer::-webkit-scrollbar-thumb {
+  background-color: #888;
+  border-radius: 3px;
+}
+
+.scrollContent span {
+  display: inline-block;
+  padding: 0 0.25rem;
+  white-space: nowrap;
+}
+
+.bold {
+  font-weight: 700;
+}
+
+.arrow {
+  margin: 0 0.25rem;
+  user-select: none;
+}
+
 
 .header {
   background-color: #0057b8;
@@ -85,7 +120,7 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  min-width: 120px;
+  min-width: 180px;
   gap: 8px;
 }
 
@@ -94,7 +129,7 @@
   font-weight: 900;
   font-size: 3.6rem;
   user-select: none;
-  padding-right: 50px;
+  padding-right: 20px;
 }
 
 .statusBadge {
@@ -136,7 +171,7 @@
   flex-direction: column;
   justify-content: center;
   min-width: 110px; /* Adjusted to match departureTime width */
-  margin-left: 20px;
+  margin-left: 40px;
   font-weight: 700;
   font-size: 1.4rem;
   color: white;
@@ -191,8 +226,8 @@
 }
 
 .rightSection {
-  min-width: 80px;
-  height: 80px;
+  min-width: 120px;
+  height: 120px;
   background-color: white;
   border-radius: 12px;
   color: #003366;
@@ -202,10 +237,10 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  margin-left: 30px;
+  margin-left: 40px;
   user-select: none;
-  max-width: 80px;
-  max-height: 80px;
+  max-width: 120px;
+  max-height: 120px;
 }
 
 .rightSection .label {

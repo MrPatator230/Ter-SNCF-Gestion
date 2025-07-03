@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext, useRef } from 'react';
 import { useRouter } from 'next/router';
 import styles from './AflArrivee.module.css';
 import { filterSchedulesByType, sortSchedulesByTime, getTrainStatus, getStationTime, } from '../../../utils/scheduleUtils';
@@ -32,6 +32,8 @@ export default function AFLArrivals() {
   const [currentPage, setCurrentPage] = useState(0);
   const [stationInfo, setStationInfo] = useState(null);
   const [showStatus, setShowStatus] = useState(true);
+
+  const scrollContainerRef = useRef(null);
 
   useEffect(() => {
     async function fetchStationInfo() {
@@ -130,6 +132,51 @@ export default function AFLArrivals() {
       setShowStatus(prev => !prev);
     }, 2000);
     return () => clearInterval(toggleInterval);
+  }, [schedules]);
+
+  useEffect(() => {
+    const scrollContainer = scrollContainerRef.current;
+    if (!scrollContainer) return;
+
+    // Variables to control scrolling
+    let scrollAmount = 0;
+    const maxScrollLeft = scrollContainer.scrollWidth - scrollContainer.clientWidth;
+    const scrollStep = 1; // pixels per interval
+    const scrollInterval = 50; // ms
+    let isHovered = false;
+
+    // Function to handle scrolling
+    const scrollStepFunction = () => {
+      if (isHovered) return; // Pause scrolling on hover
+      if (scrollAmount >= maxScrollLeft) {
+        scrollAmount = 0;
+        scrollContainer.scrollLeft = 0;
+      } else {
+        scrollAmount += scrollStep;
+        scrollContainer.scrollLeft = scrollAmount;
+      }
+    };
+
+    // Set interval for scrolling
+    const intervalId = setInterval(scrollStepFunction, scrollInterval);
+
+    // Event listeners to pause scrolling on hover
+    const handleMouseEnter = () => {
+      isHovered = true;
+    };
+    const handleMouseLeave = () => {
+      isHovered = false;
+    };
+
+    scrollContainer.addEventListener('mouseenter', handleMouseEnter);
+    scrollContainer.addEventListener('mouseleave', handleMouseLeave);
+
+    // Cleanup on unmount
+    return () => {
+      clearInterval(intervalId);
+      scrollContainer.removeEventListener('mouseenter', handleMouseEnter);
+      scrollContainer.removeEventListener('mouseleave', handleMouseLeave);
+    };
   }, [schedules]);
 
   if (!gare) {
@@ -355,12 +402,19 @@ fill="#ffffff"/>
                   {currentPage === 0 && (
                     <div className={styles.viaRow}>
                       <span>Provenance</span>
-                      {stationsBeforeGare.map((station, idx) => (
-                          <span key={idx} className={idx === 0 ? styles.bold : ''}>
-                            {station}
-                            {idx < stationsBeforeGare.length - 1 && <span className={styles.arrow}></span>}
-                          </span>
-                        ))}
+                      <div
+                        className={styles.scrollContainer}
+                        ref={scrollContainerRef}
+                      >
+                        <div className={styles.scrollContent}>
+                          {stationsBeforeGare.map((station, idx) => (
+                            <span key={idx} className={idx === 0 ? styles.bold : ''}>
+                              {station}
+                              {idx < stationsBeforeGare.length - 1 && <span className={styles.arrow}>{'>'}</span>}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   )}
                 </section>

@@ -11,6 +11,39 @@
   color: rgb(255, 255, 255);
 }
 
+.scrollContainer {
+  width: 1250px;
+  overflow-x: auto;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: #888 transparent;
+}
+
+.scrollContainer::-webkit-scrollbar {
+  height: 6px;
+}
+
+.scrollContainer::-webkit-scrollbar-thumb {
+  background-color: #888;
+  border-radius: 3px;
+}
+
+.scrollContent span {
+  display: inline-block;
+  padding: 0 0.25rem;
+  white-space: nowrap;
+}
+
+.bold {
+  font-weight: 700;
+}
+
+.arrow {
+  margin: 0 0.25rem;
+  user-select: none;
+}
+
 
 .header {
   background-color: #187936;

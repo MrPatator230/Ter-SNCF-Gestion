@@ -294,6 +294,59 @@ export const resetDelaysAndCancellations = () => {
 };
 
 /**
+ * Reset delays, cancellations, and causes for schedules where the arrival time is exceeded by 15 minutes.
+ * @param {string} referenceTime - The current time in "HH:mm" format to compare against arrival times.
+ */
+export const resetExpiredDelaysAndCancellations = (referenceTime) => {
+  if (typeof window === 'undefined' || !referenceTime) return;
+
+  const schedules = JSON.parse(localStorage.getItem('schedules') || '[]');
+
+  // Helper to convert "HH:mm" to total minutes
+  const timeToMinutes = (time) => {
+    const [h, m] = time.split(':').map(Number);
+    return h * 60 + m;
+  };
+
+  const refMinutes = timeToMinutes(referenceTime);
+
+  const updatedSchedules = schedules.map(schedule => {
+    // Calculate arrival time with delay if any
+    let arrivalTime = schedule.arrivalTime;
+    if (!arrivalTime) {
+      // If no arrivalTime, try to get from servedStations last arrivalTime if exists
+      if (schedule.servedStations && schedule.servedStations.length > 0) {
+        const lastStation = schedule.servedStations[schedule.servedStations.length - 1];
+        arrivalTime = lastStation.arrivalTime || null;
+      }
+    }
+
+    if (!arrivalTime) {
+      // Cannot determine arrival time, skip reset
+      return schedule;
+    }
+
+    // Calculate delayed arrival time in minutes
+    const arrivalMinutes = timeToMinutes(arrivalTime) + (schedule.delayMinutes || 0);
+
+    // If arrival time + 15 minutes < reference time, reset delays, cancellations, and causes
+    if (arrivalMinutes + 15 < refMinutes) {
+      return {
+        ...schedule,
+        delayMinutes: 0,
+        isCancelled: false,
+        cause: null,
+        causeId: null,
+      };
+    }
+
+    return schedule;
+  });
+
+  localStorage.setItem('schedules', JSON.stringify(updatedSchedules));
+};
+
+/**
  * Fonction pour ajouter un nouvel horaire
  * @param {Object} schedule - L'objet horaire à ajouter
  */
@@ -306,11 +359,23 @@ export const addSchedule = (schedule) => {
   localStorage.setItem('schedules', JSON.stringify(schedules));
 };
 
-// Fonction pour supprimer un horaire par id
-export const deleteSchedule = (id) => {
-  if (typeof window === 'undefined') return;
 
-  const schedules = JSON.parse(localStorage.getItem('schedules') || '[]');
-  const filteredSchedules = schedules.filter(schedule => schedule.id !== id);
-  localStorage.setItem('schedules', JSON.stringify(filteredSchedules));
+// Fonction pour obtenir le jour suivant en anglais (e.g., 'Monday' -> 'Tuesday')
+export const getNextDay = (currentDay) => {
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const index = days.indexOf(currentDay);
+  if (index === -1) return null;
+  return days[(index + 1) % days.length];
+};
+
+// Fonction pour filtrer les horaires par jour de circulation spécifique
+export const filterSchedulesByDay = (schedules, day) => {
+  if (!schedules || !day) return [];
+
+  return schedules.filter(schedule => {
+    if (!schedule.joursCirculation || schedule.joursCirculation.length === 0) {
+      return true; // Si pas de joursCirculation, on considère que le train circule tous les jours
+    }
+    return schedule.joursCirculation.includes(day);
+  });
 };

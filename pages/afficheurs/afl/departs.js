@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext, useRef } from 'react';
 import { useRouter } from 'next/router';
 import styles from './AflDepart.module.css';
 import { filterSchedulesByType, sortSchedulesByTime, getTrainStatus, getStationTime } from '../../../utils/scheduleUtils';
@@ -32,6 +32,8 @@ export default function AFLDepartures() {
   const [currentPage, setCurrentPage] = useState(0);
   const [stationInfo, setStationInfo] = useState(null);
   const [showStatus, setShowStatus] = useState(true);
+
+  const scrollContainerRef = useRef(null);
 
   useEffect(() => {
     async function fetchStationInfo() {
@@ -130,6 +132,28 @@ export default function AFLDepartures() {
       setShowStatus(prev => !prev);
     }, 2000);
     return () => clearInterval(toggleInterval);
+  }, [schedules]);
+
+  useEffect(() => {
+    const scrollContainer = scrollContainerRef.current;
+    if (!scrollContainer) return;
+
+    let scrollAmount = 0;
+    const maxScrollLeft = scrollContainer.scrollWidth - scrollContainer.clientWidth;
+    const scrollStep = 1; // pixels per interval
+    const scrollInterval = 50; // ms
+
+    const intervalId = setInterval(() => {
+      if (scrollAmount >= maxScrollLeft) {
+        scrollAmount = 0;
+        scrollContainer.scrollLeft = 0;
+      } else {
+        scrollAmount += scrollStep;
+        scrollContainer.scrollLeft = scrollAmount;
+      }
+    }, scrollInterval);
+
+    return () => clearInterval(intervalId);
   }, [schedules]);
 
   if (!gare) {
@@ -274,107 +298,76 @@ fill="#ffffff"/>
                 </div>
                     </>
                   ) : (
-                    showStatus ? (
-                      <div className={styles.statusBadge} style={{ backgroundColor: (() => {
-                        if (statusCode === 'on_time') return '#0057b8'; // blue
-                        if (statusCode === 'delayed') return '#ff7f50'; // coral for delayed
-                        if (statusCode === 'canceled') return '#cf0a0a'; // canceled Red
-                        return '#0057b8';
-                      })() }}>
-                        {statusCode === 'on_time' && (
-                          <>
-                            <svg viewBox="0 0 500 500" style={{ height: '1.8rem', width: '2rem', marginRight: '1rem', display: 'block', marginTop: 'auto', marginBottom: 'auto' }} aria-hidden="true" focusable="false" role="img" xmlns="http://www.w3.org/2000/svg">
-                              <circle cx="250" cy="250" r="260" fill="#ffffff" />
-                              <path d="M493.0162,131.3881,167.6317,431.1571c-8.14,7.3934-21.2841,7.3934-29.0509,0L6.9931,310.1741a17.9886,17.9886,0,0,1,0-26.81l38.7594-35.8468c8.29-7.1694,21.2094-7.1694,28.9762,0l63.7774,58.3257c7.7669,7.4681,20.9107,7.4681,29.0509,0l257.5-237.1117a22.0339,22.0339,0,0,1,28.9762,0l38.9087,35.7721a18.0157,18.0157,0,0,1,.0747,26.8851Z" fill="#0057b8" />
-                            </svg>
-                            <span>à l'heure</span>
-                          </>
-                        )}
-                        {statusCode === 'delayed' && (
-                          <>
-                            <svg viewBox="0 0 500 500" style={{ height: '1.8rem', width: '2rem', marginRight: '1rem', marginLeft: '0.3rem', display: 'block', marginTop: 'auto', marginBottom: 'auto' }} aria-hidden="true" focusable="false" role="img" xmlns="http://www.w3.org/2000/svg">
-                              <path d="M250,116.7c-73.5,0-133.3,59.8-133.3,133.3S176.5,383.3,250,383.3,383.3,323.5,383.3,250,323.5,116.7,250,116.7Zm70.5,202.2-87.9-52.3v-100h25v87.9l75,44.7-12.1,19.7Z" 
-                              fill="#ffffff" />
-                              <path d="M250,1C112.6516,1,1,112.6516,1,250S112.6516,499,250,499,499,387.3484,499,250,387.3484,1,250,1Zm0,415.0332c-91.3332,0-166.0332-74.7-166.0332-166.0332S157.97,83.9668,250,83.9668,416.0332,158.6668,416.0332,250,341.3332,416.0332,250,416.0332Z" 
-                              fill="#ff7f50" />
-                            </svg>
-                            <span>+ {schedule.delayMinutes} min</span>
-                          </>
-                        )}
-                        {statusCode === 'canceled' && (
-                          <>
-                            <svg viewBox="0 0 500 500">
-                              <path d="M250,1C112.6516,1,1,112.6516,1,250S112.6516,499,250,499,499,387.3484,499,250,387.3484,1,250,1ZM374.5,182.87V312.6484c0,30.1788-24.1032,55.0788-54.282,55.0788l23.406,23.406v7.57H312.6484L281.6728,367.03H222.8092l-30.9756,31.6728H157.1728v-7.57l23.406-23.406c-18.1272,0-33.9636-9.0636-44.5212-23.406l-42.23,28.6848a12.2764,12.2764,0,0,1-6.7728,2.2908c-3.7848,0-7.57-2.2908-10.5576-5.2788-3.7848-6.0756-2.2908-13.5456,2.988-17.33l46.812-31.6728a29.136,29.136,0,0,1-.7968-8.2668v-149.4C125.5,108.2692,187.3516,100.7,250,100.7c64.1424,0,116.2332,7.57,123.006,52.788L413.7424,125.6c6.0756-3.7848,13.5456-2.2908,17.33,2.988,3.7847,6.0756,2.2907,13.5456-2.988,17.33Z" 
-                              fill="#ffffff"/>
-                              <path d="M161.4,327.3c4.5,5.3,10.6,9.1,18.2,9.1a23.6015,23.6015,0,0,0,23.5-23.5,25.8783,25.8783,0,0,0-3-11.4Z" fill="#ffffff"/>
-                              <circle cx="320.5" cy="312.9" r="23.5" fill="#ffffff"/>
-                              <path d="M156.1,162.9h78v62.9h-78Zm109.8,63.6,78-53V162.9h-78Zm78,0V203.8l-33.3,22.7Z" fill="#ffffff"/>
-                            </svg>
-                            <span>Supprimé</span>
-                          </>
-                        )}
-                      </div>
-                    ) : (
-                      <time className={styles.departureTime} dateTime={displayTime} style={{ color: '#dfff00', fontWeight: '900' }}>
-                        {formatTimeHHmm(displayTime)}
-                      </time>
-                    )
+                    <time className={styles.departureTime} dateTime={displayTime} style={{ color: '#dfff00', fontWeight: '900' }}>
+                      {formatTimeHHmm(displayTime)}
+                    </time>
                   )}
                 </section>
-                <section className={styles.trainInfo}>
-                  <div>{schedule.trainType || ''}</div>
-                  <div>{schedule.trainNumber || ''}</div>
-                </section>
-                <section className={styles.middleSection}>
-                  <div className={styles.destinationRow} style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    {isBus ? (
-                      <i className="bi bi-bus-front-fill" aria-label="Bus" role="img"></i>
-                    ) : (
-                      <i className="bi bi-train-front-fill" aria-label="Train" role="img"></i>
+                <section className={styles.statusSection} aria-label="Statut du train">
+                  
+              </section>
+              <section className={styles.trainInfo}>
+                <div>{schedule.trainType || ''}</div>
+                <div>{schedule.trainNumber || ''}</div>
+              </section>
+              <section className={styles.middleSection}>
+                <div className={styles.destinationRow} style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  {isBus ? (
+                    <i className="bi bi-bus-front-fill" aria-label="Bus" role="img"></i>
+                  ) : (
+                    <i className="bi bi-train-front-fill" aria-label="Train" role="img"></i>
+                  )}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <div>{schedule.arrivalStation}</div>
+                    {(statusCode === 'delayed' || statusCode === 'canceled') && (schedule.cause || schedule.cause === '') && (
+                      <div
+                        className={styles.causeBadge}
+                        style={{
+                          backgroundColor: statusCode === 'canceled' ? '#cf0a0a' : '#ff7f50',
+                        }}
+                        aria-label={`Cause: ${schedule.cause || ''}`}
+                      >
+                        {schedule.cause || ''}
+                      </div>
                     )}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                      <div>{schedule.arrivalStation}</div>
-                      {(statusCode === 'delayed' || statusCode === 'canceled') && (schedule.cause || schedule.cause === '') && (
-                        <div
-                          className={styles.causeBadge}
-                          style={{
-                            backgroundColor: statusCode === 'canceled' ? '#cf0a0a' : '#ff7f50',
-                          }}
-                          aria-label={`Cause: ${schedule.cause || ''}`}
-                        >
-                          {schedule.cause || ''}
-                        </div>
-                      )}
-                    </div>
                   </div>
-                  {currentPage === 0 && (
+                </div>
+                {currentPage === 0 && (
                   <div className={styles.viaRow}>
                     <span>via</span>
-                    {stationsAfterGare.map((station, idx) => (
-                      <span key={idx} className={idx === 0 ? styles.bold : ''}>
-                        {station}
-                        {idx < stationsAfterGare.length - 1 && <span className={styles.arrow}></span>}
-                      </span>
-                    ))}
+                    <div
+                      className={styles.scrollContainer}
+                      ref={scrollContainerRef}
+                    >
+                      <div className={styles.scrollContent}>
+                        {stationsAfterGare.map((station, idx) => (
+                          <span key={idx} className={idx === 0 ? styles.bold : ''}>
+                            {station}
+                            {idx < stationsAfterGare.length - 1 && <span className={styles.arrow}>{'>'}</span>}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
                   </div>
-                  )}
-                </section>
-                <section className={styles.rightSection} aria-label="Voie">
-                  <div className={styles.label}>Voie</div>
-                  {statusCode === 'canceled' ? (
-                    <svg viewBox="0 0 500 500" style={{ width: '100%', height: '100%' }} aria-hidden="true" focusable="false" role="img" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M329.182,250,483.1636,96.1178c21.1152-21.1152,21.1152-58.0668,0-79.182s-58.0668-21.1152-79.182,0L250,170.8178,96.118,16.8362c-21.1152-21.1152-58.0668-21.1152-79.182,0s-21.1152,58.0668,0,79.182L170.818,250,16.8364,403.8818c-21.1152,21.1152-21.1152,58.0668,0,79.182s58.0668,21.1152,79.182,0L250,329.1818l153.882,153.882c21.1152,21.1152,58.0668,21.1152,79.182,0s21.1152-58.0668,0-79.182Z"
-                      fill="#cf0a0a"/>
-                    </svg>
-                  ) : (
-                    <div>{trackAssignments[schedule.id]?.[gare] || schedule.track || '-'}</div>
-                  )}
-                </section>
-              </li>
-            );
-          })}
-        </ul>
-      </main>
-    </div>
-  );
+                )}
+              </section>
+              <section className={styles.rightSection} aria-label="Voie">
+                <div className={styles.label}>Voie</div>
+                {statusCode === 'canceled' ? (
+                  <svg viewBox="0 0 500 500" style={{ width: '100%', height: '100%' }} aria-hidden="true" focusable="false" role="img" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M329.182,250,483.1636,96.1178c21.1152-21.1152,21.1152-58.0668,0-79.182s-58.0668-21.1152-79.182,0L250,170.8178,96.118,16.8362c-21.1152-21.1152-58.0668-21.1152-79.182,0s-21.1152,58.0668,0,79.182L170.818,250,16.8364,403.8818c-21.1152,21.1152-21.1152,58.0668,0,79.182s58.0668,21.1152,79.182,0L250,329.1818l153.882,153.882c21.1152,21.1152,58.0668,21.1152,79.182,0s21.1152-58.0668,0-79.182Z"
+                    fill="#cf0a0a"/>
+                  </svg>
+                ) : (
+                  <div>{trackAssignments[schedule.id]?.[gare] || schedule.track || '-'}</div>
+                )}
+              </section>
+            </li>
+          );
+        })}
+      </ul>
+    </main>
+  </div>
+);
 }
+
