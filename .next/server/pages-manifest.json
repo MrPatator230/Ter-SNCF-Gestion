@@ -3,9 +3,10 @@
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
   "/admin/gestion-horaires": "pages/admin/gestion-horaires.js",
+  "/api/track-assignments": "pages/api/track-assignments.js",
   "/afficheurs/afl/departs": "pages/afficheurs/afl/departs.js",
   "/api/stations": "pages/api/stations.js",
-  "/api/track-assignments": "pages/api/track-assignments.js",
-  "/admin": "pages/admin.js",
-  "/api/schedules/by-station": "pages/api/schedules/by-station.js"
+  "/api/schedules/by-station": "pages/api/schedules/by-station.js",
+  "/afficheurs/afl/arrivees": "pages/afficheurs/afl/arrivees.js",
+  "/api/entreprise": "pages/api/entreprise.js"
 }

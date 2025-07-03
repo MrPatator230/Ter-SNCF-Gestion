@@ -46,7 +46,7 @@ function InfosTrafficsWidget({ onSelectInfo }) {
     return (
       <div className="sncf-card h-100">
         <div className="sncf-card-body">
-          <h2 className="h4 mb-3">Infos Traffics</h2>
+          <h2 className="h4 mb-3">Infos Trafic</h2>
           <p>Chargement...</p>
         </div>
       </div>
@@ -57,7 +57,7 @@ function InfosTrafficsWidget({ onSelectInfo }) {
     return (
       <div className="sncf-card h-100">
         <div className="sncf-card-body">
-          <h2 className="h4 mb-3">Infos Traffics</h2>
+          <h2 className="h4 mb-3">Infos Trafic</h2>
           <p className="text-danger">{error}</p>
         </div>
       </div>
@@ -68,7 +68,7 @@ function InfosTrafficsWidget({ onSelectInfo }) {
     return (
       <div className="sncf-card h-100">
         <div className="sncf-card-body">
-          <h2 className="h4 mb-3">Infos Traffics</h2>
+          <h2 className="h4 mb-3">Infos Trafic</h2>
           <p>Aucune info trafic enregistrée.</p>
         </div>
       </div>
@@ -78,7 +78,7 @@ function InfosTrafficsWidget({ onSelectInfo }) {
   return (
     <div className="sncf-card h-100">
       <div className="sncf-card-body">
-        <h2 className="h4 mb-3">Infos Traffics</h2>
+        <h2 className="h4 mb-3">Infos Trafic</h2>
         <div className="d-flex flex-wrap gap-3">
           {trafficInfos.map(info => (
             <div
