@@ -2,11 +2,14 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/admin/gestion-horaires": "pages/admin/gestion-horaires.js",
   "/api/track-assignments": "pages/api/track-assignments.js",
-  "/afficheurs/afl/departs": "pages/afficheurs/afl/departs.js",
-  "/api/stations": "pages/api/stations.js",
+  "/admin/gestion-horaires": "pages/admin/gestion-horaires.js",
   "/api/schedules/by-station": "pages/api/schedules/by-station.js",
   "/afficheurs/afl/arrivees": "pages/afficheurs/afl/arrivees.js",
-  "/api/entreprise": "pages/api/entreprise.js"
+  "/afficheurs/afl/departs": "pages/afficheurs/afl/departs.js",
+  "/api/stations": "pages/api/stations.js",
+  "/": "pages/index.js",
+  "/api/entreprise": "pages/api/entreprise.js",
+  "/api/actualites": "pages/api/actualites.js",
+  "/api/infos-trafic": "pages/api/infos-trafic.js"
 }
