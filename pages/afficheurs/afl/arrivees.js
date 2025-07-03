@@ -432,7 +432,16 @@ fill="#ffffff"/>
               </li>
             );
           })}
-        </ul>
+          </ul>
+          {currentPage === 0 && schedules.length > 0 && (
+            <section className={styles.nextDaySection}>
+              <p className={styles.nextDayText}>Les prochaines arrivées auront lieu demain.</p>
+              <ul className={styles.scheduleList} role="list">
+                {/* Render next day schedules here if available */}
+                {/* You may need to fetch and manage nextDaySchedules state similar to departures */}
+              </ul>
+            </section>
+          )}
       </main>
     </div>
   );
