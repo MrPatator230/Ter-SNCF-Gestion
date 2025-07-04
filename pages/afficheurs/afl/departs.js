@@ -19,6 +19,56 @@ const formatTimeHHmm = (timeStr) => {
   return `${hours}:${minutes}`;
 };
 
+const StationsScroller = ({ stations, scrollDuration }) => {
+  const scrollContainerRef = useRef(null);
+
+  useEffect(() => {
+    const scrollContainer = scrollContainerRef.current;
+    if (!scrollContainer || scrollContainer.scrollWidth <= scrollContainer.clientWidth) {
+      return;
+    }
+
+    // For one seamless pass, the distance to travel is half the total scroll width
+    const maxScrollLeft = scrollContainer.scrollWidth / 2;
+    const scrollInterval = 40; // ms for animation frames
+    const numIntervals = scrollDuration / scrollInterval;
+    const scrollStep = maxScrollLeft / numIntervals;
+
+    let scrollAmount = 0;
+    const intervalId = setInterval(() => {
+      if (scrollAmount >= maxScrollLeft) {
+        // When one full pass is complete, reset to the beginning.
+        // Since the content is duplicated, this is seamless.
+        scrollAmount = 0;
+      }
+      scrollAmount += scrollStep;
+      scrollContainer.scrollLeft = scrollAmount;
+    }, scrollInterval);
+
+    return () => clearInterval(intervalId);
+  }, [stations, scrollDuration]);
+
+  return (
+    <div className={styles.scrollContainer} ref={scrollContainerRef}>
+      <div className={styles.scrollContent}>
+        {stations.map((station, idx) => (
+          <span key={idx} className={idx === 0 ? styles.bold : ''}>
+            {station}
+            {idx < stations.length - 1 && <span className={styles.arrow}>{' > '}</span>}
+          </span>
+        ))}
+        {/* Duplicate stations for seamless scrolling */}
+        {stations.map((station, idx) => (
+          <span key={`dup-${idx}`} className={idx === 0 ? styles.bold : ''}>
+            {station}
+            {idx < stations.length - 1 && <span className={styles.arrow}>{' > '}</span>}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 export default function AFLDepartures() {
   const router = useRouter();
   const { gare } = router.query;
@@ -32,8 +82,6 @@ export default function AFLDepartures() {
   const [currentPage, setCurrentPage] = useState(0);
   const [stationInfo, setStationInfo] = useState(null);
   const [showStatus, setShowStatus] = useState(true);
-
-  const scrollContainerRef = useRef(null);
 
   useEffect(() => {
     async function fetchStationInfo() {
@@ -134,28 +182,6 @@ export default function AFLDepartures() {
     return () => clearInterval(toggleInterval);
   }, [schedules]);
 
-  useEffect(() => {
-    const scrollContainer = scrollContainerRef.current;
-    if (!scrollContainer) return;
-
-    let scrollAmount = 0;
-    const maxScrollLeft = scrollContainer.scrollWidth - scrollContainer.clientWidth;
-    const scrollStep = 1; // pixels per interval
-    const scrollInterval = 50; // ms
-
-    const intervalId = setInterval(() => {
-      if (scrollAmount >= maxScrollLeft) {
-        scrollAmount = 0;
-        scrollContainer.scrollLeft = 0;
-      } else {
-        scrollAmount += scrollStep;
-        scrollContainer.scrollLeft = scrollAmount;
-      }
-    }, scrollInterval);
-
-    return () => clearInterval(intervalId);
-  }, [schedules]);
-
   if (!gare) {
     return (
       <main className={styles.aflContainer} role="main">
@@ -193,22 +219,6 @@ export default function AFLDepartures() {
   });
 
   const schedulesToDisplay = currentPage === 0 ? filteredSchedules.slice(0, 4) : filteredSchedules.slice(4, 14);
-
-  // Compose stationsBeforeGare specific to departures (stations before gare in departure route)
-  let stationsBeforeGare = [];
-  if (schedulesToDisplay.length > 0) {
-    const firstSchedule = schedulesToDisplay[0];
-    const departureStations = firstSchedule.servedStations && firstSchedule.servedStations.length > 0 ? firstSchedule.servedStations : [];
-    if (departureStations.length > 0) {
-      const normalizedStations = departureStations.map(station => (typeof station === 'object' ? station.name : station));
-      const startIndex = normalizedStations.indexOf(gare);
-      if (startIndex !== -1) {
-        stationsBeforeGare = normalizedStations.slice(0, startIndex);
-      } else {
-        stationsBeforeGare = normalizedStations;
-      }
-    }
-  }
 
   return (
     <div lang="fr">
@@ -390,19 +400,7 @@ export default function AFLDepartures() {
                   {currentPage === 0 && (
                     <div className={styles.viaRow}>
                       <span>Via</span>
-                      <div
-                        className={styles.scrollContainer}
-                        ref={scrollContainerRef}
-                      >
-                        <div className={styles.scrollContent}>
-                          {stationsBeforeGare.map((station, idx) => (
-                            <span key={idx} className={idx === 0 ? styles.bold : ''}>
-                              {station}
-                              {idx < stationsBeforeGare.length - 1 && <span className={styles.arrow}>{'>'}</span>}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
+                      <StationsScroller stations={stationsAfterGare} scrollDuration={10000} />
                     </div>
                   )}
                 </section>

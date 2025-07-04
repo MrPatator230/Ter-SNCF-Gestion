@@ -20,11 +20,6 @@ globalThis.__BUILD_MANIFEST = {
       "static/chunks/main.js",
       "static/chunks/pages/_error.js"
     ],
-    "/afficheurs/afl/arrivees": [
-      "static/chunks/webpack.js",
-      "static/chunks/main.js",
-      "static/chunks/pages/afficheurs/afl/arrivees.js"
-    ],
     "/afficheurs/afl/departs": [
       "static/chunks/webpack.js",
       "static/chunks/main.js",
